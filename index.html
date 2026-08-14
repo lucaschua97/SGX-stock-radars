@@ -1,95 +1,112 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SGX Buy Radar V10</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SGX Buy Radar V11</title>
 <style>
-:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e3e8ef;--blue:#1266a8;--green:#087f5b;--red:#b42318;--amber:#946200;--shadow:0 8px 28px rgba(16,24,40,.07)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial}.wrap{max-width:1550px;margin:auto;padding:0 14px}
-header{background:linear-gradient(135deg,#0d4e80,#142b44);color:#fff;padding:23px 0}h1{margin:0}.sub{color:var(--muted);font-size:11px}.heroSub{color:#dbeaf5;margin:7px 0 0}.bar{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin:14px 0}.bar>*{padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}.btn{cursor:pointer}.primary{background:var(--blue)!important;color:#fff}.notice{padding:12px;border-radius:12px;border:1px solid #cfe2f0;background:#edf7fd}.ok{background:#e8f7f1;border-color:#b9e4d4}.warn{background:#fff6d8;border-color:#ead38c}.bad{background:#ffebe9;border-color:#efb9b3}
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:15px}.label{text-transform:uppercase;color:var(--muted);font-size:10px}.metric{font-size:21px;font-weight:800;margin-top:5px}.section{margin:18px 0}.section h2{font-size:18px}.table{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:15px}table{border-collapse:collapse;width:100%;min-width:1350px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;font-size:12px}th{font-size:10px;color:var(--muted);background:#fafbfc;position:sticky;top:0}.price{font-weight:800;font-size:14px}.good{color:var(--green);font-weight:700}.badc{color:var(--red);font-weight:700}.badge{display:inline-block;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:800}.buy{background:#e8f7f1;color:var(--green)}.watch{background:#fff6d8;color:var(--amber)}.avoid{background:#ffebe9;color:var(--red)}
-.grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:12px}.chart{height:500px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.events .event{display:grid;grid-template-columns:105px 1fr 1fr;padding:10px;border:1px solid var(--line);border-radius:10px;margin:7px 0;background:#fbfcfe;font-size:12px}.pill{display:inline-block;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#fafbfc;margin:4px;font-size:11px}
-@media(max-width:900px){.cards{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:1fr}}@media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}.events .event{grid-template-columns:1fr}.chart{height:430px}}
-</style></head>
-<body><header><div class="wrap"><h1>📊 SGX Buy Radar V10</h1><div class="heroSub">Server-side quotes • dynamic events • analysis engine • long-term buy discipline</div></div></header>
-<main class="wrap">
-<div class="bar"><input id="q" placeholder="Search stock/ticker" oninput="render()"><select id="f" onchange="render()"><option>ALL</option><option>BUY</option><option>WATCH</option><option>DON'T CHASE</option></select><button class="btn primary" onclick="load()">↻ Refresh</button><button class="btn" onclick="diagnose()">🔧 Test API</button></div>
-<div id="status" class="notice warn">Connecting…</div>
-<div class="cards"><div class="card"><div class="label">BUY / STRONG BUY</div><div class="metric" id="bn">—</div></div><div class="card"><div class="label">WATCH</div><div class="metric" id="wn">—</div></div><div class="card"><div class="label">DON'T CHASE</div><div class="metric" id="an">—</div></div><div class="card"><div class="label">Best current entry</div><div class="metric" id="best">—</div></div><div class="card"><div class="label">Data updated</div><div class="metric" id="updated">—</div></div></div>
+:root{--bg:#0b1220;--card:#111c2e;--card2:#17243a;--text:#f8fafc;--muted:#94a3b8;--primary:#3b82f6;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--border:#26364f}
+[data-theme=bloomberg]{--bg:#050505;--card:#101010;--card2:#181818;--text:#f5f5f5;--muted:#aaa;--primary:#f59e0b;--good:#00d084;--warn:#ffd166;--bad:#ff4d4d;--border:#303030}
+[data-theme=ocean]{--bg:#f1f7fc;--card:#fff;--card2:#e8f2f8;--text:#172033;--muted:#607086;--primary:#087ea4;--good:#087f5b;--warn:#b7791f;--bad:#c53030;--border:#d5e2ec}
+[data-theme=emerald]{--bg:#f4f8f5;--card:#fff;--card2:#e9f3ec;--text:#17201b;--muted:#64756b;--primary:#16855b;--good:#087f5b;--warn:#b7791f;--bad:#c53030;--border:#d5e2df}
+[data-theme=purple]{--bg:#f6f5fa;--card:#fff;--card2:#eeebf7;--text:#202124;--muted:#6b7280;--primary:#7048e8;--good:#087f5b;--warn:#b7791f;--bad:#c53030;--border:#ded9ed}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}.wrap{max-width:1450px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}
+h1{margin:0;font-size:28px}.sub,.muted{color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;padding:9px 12px}.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.status{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.pill{padding:7px 10px;border-radius:999px;background:var(--card);border:1px solid var(--border);font-size:13px;color:var(--muted)}.pill b{color:var(--text)}
+.note{background:var(--card2);border-radius:12px;padding:12px;color:var(--muted);font-size:13px}.section{margin:22px 0 10px;display:flex;justify-content:space-between;align-items:center}.section h2{font-size:18px;margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.top{display:flex;justify-content:space-between;gap:12px}.name{font-weight:750;font-size:17px}.ticker{font-size:12px;color:var(--muted);margin-top:3px}.price{font-size:27px;font-weight:800;margin-top:12px}
+.good{color:var(--good)}.bad{color:var(--bad)}.neutral{color:var(--muted)}.signal{padding:6px 9px;border-radius:8px;font-weight:700;font-size:12px;height:max-content}.watch{background:rgba(245,158,11,.14);color:var(--warn)}.nodata{background:rgba(239,68,68,.14);color:var(--bad)}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.meta div{background:var(--card2);padding:9px;border-radius:10px}.meta small{display:block;color:var(--muted);font-size:11px}.meta strong{display:block;margin-top:2px}
+.empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:14px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.modal.show{display:flex}.modalbox{width:min(680px,100%);max-height:90vh;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px}.modalhead{display:flex;justify-content:space-between;align-items:center}.modalhead h2{margin:0}
+.search{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);margin:14px 0}.result{display:flex;justify-content:space-between;align-items:center;padding:11px;border:1px solid var(--border);border-radius:10px;margin:8px 0;background:var(--card2)}.result small{display:block;color:var(--muted);margin-top:3px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.tag{padding:5px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px;background:var(--card);color:var(--text)}
+footer{margin:25px 0;color:var(--muted);font-size:12px;line-height:1.5}@media(max-width:700px){header{display:block}.actions{justify-content:flex-start;margin-top:12px}.wrap{padding:14px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div><h1>📈 SGX Buy Radar <span style="color:var(--primary)">V11</span></h1><div class="sub">SGX watchlist • live/delayed quotes • personal stock manager</div></div>
+<div class="actions">
+<button class="btn primary" onclick="openAdd()">＋ Add Stock</button>
+<button class="btn" onclick="openManage()">⚙ Manage</button>
+<select class="btn" id="theme" onchange="setTheme(this.value)"><option value="midnight">🌌 Midnight</option><option value="bloomberg">🟠 Bloomberg</option><option value="ocean">🌊 Ocean</option><option value="emerald">🟢 Emerald</option><option value="purple">🟣 Purple</option></select>
+<button class="btn" onclick="refreshAll()">↻ Refresh</button>
+</div>
+</header>
+<div class="status">
+<div class="pill">API: <b id="apiStatus">Checking…</b></div><div class="pill">Quotes: <b id="quoteStatus">—</b></div><div class="pill">Last update: <b id="updated">—</b></div><div class="pill">Watchlist: <b id="count">0</b></div>
+</div>
+<div class="note"><b>V11:</b> Add/remove SGX stocks without editing the HTML. Your watchlist and theme are saved in this browser. Buy/lock-in values remain placeholders until the dynamic analysis/event layer is connected.</div>
+<div class="section"><h2>My Watchlist</h2><span class="sub">Search, add and organize SGX stocks</span></div>
+<div id="watchlist" class="grid"></div>
+<footer>Monitoring dashboard only. Quote availability depends on the upstream source and market hours. Confirm corporate actions against SGX announcements.</footer>
+</div>
 
-<section class="section"><h2>🎯 Buy radar</h2><div class="table"><table><thead><tr><th>Rank</th><th>Stock</th><th>Price</th><th>Today</th><th>Buy range</th><th>Lock-in</th><th>Strong buy</th><th>Distance</th><th>Next event</th><th>Signal</th><th>Analysis update</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<div id="addModal" class="modal" onclick="if(event.target===this)closeModal('addModal')"><div class="modalbox">
+<div class="modalhead"><h2>＋ Add SGX Stock</h2><button class="btn" onclick="closeModal('addModal')">✕</button></div>
+<input id="stockSearch" class="search" placeholder="Search company or ticker, e.g. DBS, UOB, U11.SI" oninput="renderResults">
+<div class="tags"><button class="tag" onclick="quickSearch('DBS')">DBS</button><button class="tag" onclick="quickSearch('OCBC')">OCBC</button><button class="tag" onclick="quickSearch('UOB')">UOB</button><button class="tag" onclick="quickSearch('Singtel')">Singtel</button><button class="tag" onclick="quickSearch('Sembcorp')">Sembcorp</button><button class="tag" onclick="quickSearch('CICT')">CICT</button></div>
+<div id="results"></div>
+<div class="note">Can't find it? Enter an SGX/Yahoo symbol ending in <b>.SI</b>.</div>
+<div style="display:flex;gap:8px;margin-top:12px"><input id="customTicker" class="search" style="margin:0" placeholder="Custom ticker, e.g. S58.SI"><button class="btn primary" onclick="addCustom()">Add</button></div>
+</div></div>
 
-<section class="section"><h2>📈 Intraday chart</h2><div class="card"><select id="sel" onchange="draw()"></select><div id="meta" style="margin:8px 0"></div><div id="chart" class="chart"></div></div></section>
+<div id="manageModal" class="modal" onclick="if(event.target===this)closeModal('manageModal')"><div class="modalbox">
+<div class="modalhead"><h2>⚙ Manage Watchlist</h2><button class="btn" onclick="closeModal('manageModal')">✕</button></div><div id="manageList"></div>
+<div style="margin-top:15px"><button class="btn" onclick="resetWatchlist()">Reset to default 9</button></div>
+</div></div>
 
-<section class="section grid2"><div><h2>📅 Dynamic events</h2><div id="eventFresh" class="sub">Updating…</div><div id="events" class="events"></div></div><div><h2>🧠 How the price targets work</h2><div class="card" style="line-height:1.6">
-<b>Important:</b> the buy range and lock-in prices are <b>not yet AI-auto-updated</b> in this V10 client. They are stored as strategy inputs so the dashboard never silently changes your targets.<br><br>
-For a genuinely adaptive system, the next layer should recalculate targets from fresh price, earnings, dividend, valuation and news data, then show <b>why</b> a target changed and require your approval before saving it.<br><br>
-<b>Recommended:</b> refresh market data frequently, but update investment targets only after an evidence-based analysis cycle.
-</div></div></section>
-<footer class="sub" style="padding:20px 0 40px">Yahoo SGX quotes are delayed. This is a monitoring/decision-support dashboard, not an execution system. Do not put private API keys in public HTML.</footer>
-</main>
 <script>
 const API_BASE="https://sgstock.lucaschuaweiliat.workers.dev";
-const S=[
-{name:"UOB",t:"U11",y:"U11.SI",min:40.60,max:41.30,lock:41.00,strong:40.60,rank:1},
-{name:"Singtel",t:"Z74",y:"Z74.SI",min:4.15,max:4.30,lock:4.25,strong:4.15,rank:2},
-{name:"CICT",t:"C38U",y:"C38U.SI",min:2.35,max:2.42,lock:2.40,strong:2.30,rank:3},
-{name:"Sembcorp",t:"U96",y:"U96.SI",min:5.30,max:5.55,lock:5.50,strong:5.30,rank:4},
-{name:"ST Engineering",t:"S63",y:"S63.SI",min:10.20,max:10.45,lock:10.30,strong:10.00,rank:5},
-{name:"OCBC",t:"O39",y:"O39.SI",min:30.70,max:31.20,lock:30.90,strong:30.50,rank:6},
-{name:"DBS",t:"D05",y:"D05.SI",min:72,max:74,lock:73,strong:71.50,rank:7},
-{name:"DFI Retail",t:"D01",y:"D01.SI",min:3.50,max:3.70,lock:3.60,strong:3.50,rank:8},
-{name:"Genting Singapore",t:"G13",y:"G13.SI",min:.58,max:.62,lock:.60,strong:.58,rank:9}];
-let events=[],selected="U11";
-const money=x=>x==null?"—":(Math.abs(x)<1?Number(x).toFixed(3):Number(x).toFixed(2));
-function signal(s){if(s.price==null)return["NO DATA","watch"];if(s.price<=s.strong)return["STRONG BUY","buy"];if(s.price<=s.max)return["BUY","buy"];return["DON'T CHASE","avoid"]}
-function nextEvent(s){let a=events.filter(e=>e.ticker===s.t&&e.date>=new Date().toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date));return a[0]}
-function render(){
- let q=document.getElementById("q").value.toLowerCase(),f=document.getElementById("f").value, b=0,w=0,a=0,best=null;
- let out="";
- S.forEach(s=>{let [lab,cl]=signal(s);if(cl==="buy")b++;else if(cl==="watch")w++;else a++;if(s.price!=null&&(!best||Math.abs(s.price-s.lock)<Math.abs(best.price-best.lock)))best=s;
- if(q&&!(`${s.name} ${s.t}`.toLowerCase().includes(q)))return;if(f!=="ALL"&&f!==lab)return;
- let d=s.price==null?null:(s.price-s.lock)/s.lock*100,e=nextEvent(s);
- out+=`<tr><td>${s.rank}</td><td><b>${s.name}</b><div class="sub">${s.t}</div></td><td class="price">$${money(s.price)}</td><td class="${s.changePct>=0?'good':'badc'}">${s.changePct==null?'—':(s.changePct>=0?'+':'')+s.changePct.toFixed(2)+'%'}</td><td>$${money(s.min)}–$${money(s.max)}</td><td>$${money(s.lock)}</td><td>$${money(s.strong)}</td><td class="${d!=null&&d<=0?'good':'badc'}">${d==null?'—':(d>=0?'+':'')+d.toFixed(1)+'%'}</td><td>${e?`${e.date} • ${e.type}`:"—"}</td><td><span class="badge ${cl}">${lab}</span></td><td>${s.analysisNote||"Static strategy input"}</td></tr>`});
- document.getElementById("rows").innerHTML=out||'<tr><td colspan="11">No matches.</td></tr>';document.getElementById("bn").textContent=b;document.getElementById("wn").textContent=w;document.getElementById("an").textContent=a;document.getElementById("best").textContent=best?best.name:"—";
-}
-async function load(){
- const st=document.getElementById("status");st.className="notice warn";st.textContent="⏳ Connecting to your Cloudflare Worker…";
- try{
-   const r=await fetch(API_BASE+"/api/quotes?ts="+Date.now(),{cache:"no-store"});
-   const raw=await r.text();
-   let j; try{j=JSON.parse(raw)}catch(e){throw Error("Worker returned non-JSON data: "+raw.slice(0,160))}
-   if(!r.ok) throw Error(j.error||("HTTP "+r.status));
-   if(!j || !Array.isArray(j.quotes)) throw Error("Worker responded, but 'quotes' is not an array. Keys returned: "+Object.keys(j||{}).join(", "));
-   j.quotes.forEach(x=>{const s=S.find(z=>z.y===x.symbol || z.t===x.symbol?.replace(".SI",""));if(s){Object.assign(s,x);s.chart=Array.isArray(x.points)?x.points:[]}});
-   const ok=j.quotes.filter(x=>x && x.price!=null).length;
-   const failed=j.quotes.filter(x=>!x || x.price==null).map(x=>x?.name||x?.symbol||"unknown");
-   document.getElementById("updated").textContent=j.updated?new Date(j.updated).toLocaleTimeString():"—";
-   st.className=ok===9?"notice ok":(ok>0?"notice warn":"notice bad");
-   st.innerHTML=`<b>${ok}/9 quotes received</b> • ${j.source||"Cloudflare Worker"} • server-side`+(failed.length?`<br><span class="sub">No price returned: ${failed.join(", ")}</span>`:"");
-   await loadEvents();render();draw();
- }catch(e){st.className="notice bad";st.innerHTML=`<b>Worker connection/data error</b><br>${String(e.message).replaceAll("<","&lt;")}<br><span class="sub">Worker: ${API_BASE} • Try the 🔧 Test API button.</span>`;}
-}
-async function diagnose(){
- const st=document.getElementById("status");st.className="notice warn";st.textContent="Testing Cloudflare Worker…";
- try{
-  const h=await fetch(API_BASE+"/api/health?ts="+Date.now(),{cache:"no-store"}); if(!h.ok) throw Error("/api/health HTTP "+h.status);
-  const q=await fetch(API_BASE+"/api/quotes?ts="+Date.now(),{cache:"no-store"}); const raw=await q.text(); let j;try{j=JSON.parse(raw)}catch(e){throw Error("/api/quotes is not JSON")};
-  if(!Array.isArray(j.quotes)) throw Error("/api/quotes has no quotes array. Keys: "+Object.keys(j).join(", "));
-  const ok=j.quotes.filter(x=>x?.price!=null).length; st.className=ok===9?"notice ok":"notice warn"; st.innerHTML=`<b>Cloudflare Worker: OK</b> • /api/quotes: ${ok}/9 prices returned • API connection is working.`;
- }catch(e){st.className="notice bad";st.textContent="API diagnostic failed: "+e.message;}
-}
-async function loadEvents(){
- // V10 deliberately keeps event ingestion separate from quote ingestion.
- // If no event API is configured, the UI explains that event data needs a provider/official feed.
- const el=document.getElementById("events");const fr=document.getElementById("eventFresh");
- events=[];fr.textContent="Event API not configured in this demo build.";
- el.innerHTML='<div class="card">For reliable future earnings/dividend dates, connect a licensed/authoritative corporate-events API through the same Worker. This avoids hard-coded dates and browser CORS problems.</div>';
-}
-function draw(){
- let s=S.find(x=>x.t===selected)||S[0];selected=document.getElementById("sel").value||selected;s=S.find(x=>x.t===selected)||s;
- document.getElementById("meta").innerHTML=`<span class="pill">Last $${money(s.price)}</span><span class="pill">Buy $${money(s.min)}–$${money(s.max)}</span><span class="pill">Lock-in $${money(s.lock)}</span><span class="pill">Strong buy $${money(s.strong)}</span>`;
- let a=s.chart||[];if(a.length<2){document.getElementById("chart").innerHTML='<div style="padding:30px;color:#667085">No intraday data returned.</div>';return}
- let W=1200,H=470,L=65,R=25,T=50,B=55,lo=Math.min(...a.map(x=>x.c),s.lock),hi=Math.max(...a.map(x=>x.c),s.lock),rg=hi-lo||1,x=i=>L+i*(W-L-R)/(a.length-1),y=v=>T+(hi-v)/rg*(H-T-B),pts=a.map((p,i)=>`${x(i)},${y(p.c)}`).join(" "),ly=y(s.lock);
- document.getElementById("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%"><rect width="100%" height="100%" fill="#fff"/><text x="${L}" y="27" font-size="17" font-weight="800">${s.name} • 5-minute</text><line x1="${L}" x2="${W-R}" y1="${ly}" y2="${ly}" stroke="#087f5b" stroke-width="2" stroke-dasharray="8 5"/><text x="${W-R}" y="${ly-6}" text-anchor="end" fill="#087f5b">LOCK-IN ${money(s.lock)}</text><polyline points="${pts}" fill="none" stroke="#1266a8" stroke-width="3"/><circle cx="${x(a.length-1)}" cy="${y(a.at(-1).c)}" r="5" fill="#1266a8"/></svg>`;
-}
-document.getElementById("sel").innerHTML=S.map(s=>`<option value="${s.t}">${s.name} (${s.t})</option>`).join("");document.getElementById("sel").value=selected;render();load();setInterval(load,60000);
-</script></body></html>
+const KEY="sgx_buy_radar_v11_watchlist", THEME_KEY="sgx_buy_radar_v11_theme";
+const CATALOG=[
+["UOB","United Overseas Bank Limited","U11.SI"],["DBS","DBS Group Holdings Ltd","D05.SI"],["OCBC","Oversea-Chinese Banking Corporation","O39.SI"],
+["Singtel","Singapore Telecommunications Limited","Z74.SI"],["Sembcorp Industries","Sembcorp Industries Ltd","U96.SI"],["CICT","CapitaLand Integrated Commercial Trust","C38U.SI"],
+["DFI Retail","DFI Retail Group Holdings Limited","1KZ.SI"],["ST Engineering","Singapore Technologies Engineering Ltd","S63.SI"],["Keppel","Keppel Ltd.","BN4.SI"],
+["Wilmar","Wilmar International Limited","F34.SI"],["Genting Singapore","Genting Singapore Limited","G13.SI"],["SATS","SATS Ltd.","S58.SI"],
+["CapitaLand Investment","CapitaLand Investment Limited","9CI.SI"],["Frasers Centrepoint Trust","Frasers Centrepoint Trust","J69U.SI"],
+["Mapletree Logistics Trust","Mapletree Logistics Trust","M44U.SI"],["Mapletree Industrial Trust","Mapletree Industrial Trust","ME8U.SI"],
+["Keppel REIT","Keppel REIT","K71U.SI"],["Ascendas REIT","CapitaLand Ascendas REIT","A17U.SI"],["Hongkong Land","Hongkong Land Holdings Limited","H78.SI"],
+["Thai Beverage","Thai Beverage Public Company Limited","Y92.SI"],["Yangzijiang Shipbuilding","Yangzijiang Shipbuilding Holdings","BS6.SI"]
+];
+const DEFAULT=["U11.SI","D05.SI","O39.SI","Z74.SI","U96.SI","C38U.SI","1KZ.SI","S63.SI","BN4.SI"];
+let watchlist=load(), quotes={};
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(x)&&x.length)return x}catch(e){}return DEFAULT.slice()}
+function save(){localStorage.setItem(KEY,JSON.stringify(watchlist));document.getElementById("count").textContent=watchlist.length}
+function setTheme(t){document.documentElement.dataset.theme=t==="midnight"?"":t;localStorage.setItem(THEME_KEY,t)}
+function loadTheme(){let t=localStorage.getItem(THEME_KEY)||"midnight";document.getElementById("theme").value=t;setTheme(t)}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function info(s){return CATALOG.find(x=>x[2]===s)||[s,s,s]}
+function openAdd(){document.getElementById("addModal").classList.add("show");document.getElementById("stockSearch").focus();renderResults()}
+function openManage(){renderManage();document.getElementById("manageModal").classList.add("show")}
+function closeModal(id){document.getElementById(id).classList.remove("show")}
+function quickSearch(s){document.getElementById("stockSearch").value=s;renderResults()}
+function renderResults(){
+const q=document.getElementById("stockSearch").value.trim().toLowerCase();
+const a=CATALOG.filter(x=>!q||x.some(v=>v.toLowerCase().includes(q)));
+document.getElementById("results").innerHTML=a.slice(0,15).map(x=>`<div class="result"><div><b>${esc(x[0])}</b><small>${esc(x[1])} • ${esc(x[2])}</small></div><button class="btn ${watchlist.includes(x[2])?'':'primary'}" onclick="toggleStock('${x[2]}')">${watchlist.includes(x[2])?'✓ Added':'＋ Add'}</button></div>`).join("")||'<div class="empty">No match. Try a .SI ticker below.</div>'}
+function toggleStock(s){watchlist=watchlist.includes(s)?watchlist.filter(x=>x!==s):[...watchlist,s];save();renderResults();renderManage();refreshAll()}
+function addCustom(){let s=document.getElementById("customTicker").value.trim().toUpperCase();if(!s)return;if(!s.includes("."))s+=".SI";if(!/^[A-Z0-9]{1,12}\.SI$/.test(s)){alert("Use a ticker such as S58.SI");return}if(!watchlist.includes(s))watchlist.push(s);save();document.getElementById("customTicker").value="";closeModal("addModal");refreshAll()}
+function renderManage(){document.getElementById("manageList").innerHTML=watchlist.map(s=>{let x=info(s);return `<div class="result"><div><b>${esc(x[0])}</b><small>${esc(x[1])} • ${esc(s)}</small></div><button class="btn" onclick="toggleStock('${s}')">Remove</button></div>`}).join("")||'<div class="empty">Watchlist empty.</div>'}
+function resetWatchlist(){watchlist=DEFAULT.slice();save();closeModal("manageModal");refreshAll()}
+function money(n){return Number.isFinite(n)?`S$${n.toFixed(2)}`:"—"}
+function pct(n){return Number.isFinite(n)?`${n>=0?"+":""}${n.toFixed(2)}%`:"—"}
+async function refreshAll(){
+save();document.getElementById("apiStatus").textContent="Checking…";document.getElementById("quoteStatus").textContent="Loading…";
+try{let r=await fetch(API_BASE+"/api/quotes",{cache:"no-store"});if(!r.ok)throw Error("Worker HTTP "+r.status);let j=await r.json();if(!Array.isArray(j.quotes))throw Error(j.error||"No quotes array returned");
+quotes={};j.quotes.forEach(q=>{if(q&&q.symbol)quotes[q.symbol]=q});
+let n=watchlist.filter(s=>quotes[s]&&Number.isFinite(Number(quotes[s].price))).length;
+document.getElementById("apiStatus").textContent="🟢 Connected";document.getElementById("quoteStatus").textContent=`${n}/${watchlist.length} quotes`;document.getElementById("updated").textContent=j.updated?new Date(j.updated).toLocaleString():"—";renderCards()
+}catch(e){document.getElementById("apiStatus").textContent="🔴 Failed";document.getElementById("quoteStatus").textContent="Error";document.getElementById("updated").textContent=e.message;renderCards()}}
+function renderCards(){
+let el=document.getElementById("watchlist");if(!watchlist.length){el.innerHTML='<div class="empty">No stocks yet. Click ＋ Add Stock.</div>';return}
+el.innerHTML=watchlist.map(s=>{let x=info(s),q=quotes[s]||{},p=Number(q.price),c=Number(q.changePercent),ok=Number.isFinite(p);return `<div class="card"><div class="top"><div><div class="name">${esc(x[0])}</div><div class="ticker">${esc(s)} • ${esc(x[1])}</div></div><span class="signal ${ok?'watch':'nodata'}">${ok?'WATCH':'NO DATA'}</span></div><div class="price">${ok?money(p):'—'} ${Number.isFinite(c)?`<span class="${c>0?'good':c<0?'bad':'neutral'}" style="font-size:14px">${pct(c)}</span>`:''}</div><div class="meta"><div><small>Buy range</small><strong>To be analysed</strong></div><div><small>Lock-in</small><strong>To be analysed</strong></div><div><small>Volume</small><strong>${Number.isFinite(Number(q.volume))?Number(q.volume).toLocaleString():'—'}</strong></div><div><small>Day range</small><strong>${Number.isFinite(Number(q.low))?money(Number(q.low)):'—'} – ${Number.isFinite(Number(q.high))?money(Number(q.high)):'—'}</strong></div></div><div class="muted" style="font-size:12px;margin-top:12px">Earnings, dividends and news: dynamic event layer to be connected.</div></div>`}).join("")}
+loadTheme();save();renderCards();refreshAll();setInterval(refreshAll,120000);
+</script>
+</body>
+</html>
