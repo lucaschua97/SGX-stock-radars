@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SGX Buy Radar V10</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e3e8ef;--blue:#1266a8;--green:#087f5b;--red:#b42318;--amber:#946200;--shadow:0 8px 28px rgba(16,24,40,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial}.wrap{max-width:1550px;margin:auto;padding:0 14px}
+header{background:linear-gradient(135deg,#0d4e80,#142b44);color:#fff;padding:23px 0}h1{margin:0}.sub{color:var(--muted);font-size:11px}.heroSub{color:#dbeaf5;margin:7px 0 0}.bar{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin:14px 0}.bar>*{padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}.btn{cursor:pointer}.primary{background:var(--blue)!important;color:#fff}.notice{padding:12px;border-radius:12px;border:1px solid #cfe2f0;background:#edf7fd}.ok{background:#e8f7f1;border-color:#b9e4d4}.warn{background:#fff6d8;border-color:#ead38c}.bad{background:#ffebe9;border-color:#efb9b3}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:15px}.label{text-transform:uppercase;color:var(--muted);font-size:10px}.metric{font-size:21px;font-weight:800;margin-top:5px}.section{margin:18px 0}.section h2{font-size:18px}.table{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:15px}table{border-collapse:collapse;width:100%;min-width:1350px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;font-size:12px}th{font-size:10px;color:var(--muted);background:#fafbfc;position:sticky;top:0}.price{font-weight:800;font-size:14px}.good{color:var(--green);font-weight:700}.badc{color:var(--red);font-weight:700}.badge{display:inline-block;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:800}.buy{background:#e8f7f1;color:var(--green)}.watch{background:#fff6d8;color:var(--amber)}.avoid{background:#ffebe9;color:var(--red)}
+.grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:12px}.chart{height:500px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.events .event{display:grid;grid-template-columns:105px 1fr 1fr;padding:10px;border:1px solid var(--line);border-radius:10px;margin:7px 0;background:#fbfcfe;font-size:12px}.pill{display:inline-block;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#fafbfc;margin:4px;font-size:11px}
+@media(max-width:900px){.cards{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:1fr}}@media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}.events .event{grid-template-columns:1fr}.chart{height:430px}}
+</style></head>
+<body><header><div class="wrap"><h1>📊 SGX Buy Radar V10</h1><div class="heroSub">Server-side quotes • dynamic events • analysis engine • long-term buy discipline</div></div></header>
+<main class="wrap">
+<div class="bar"><input id="q" placeholder="Search stock/ticker" oninput="render()"><select id="f" onchange="render()"><option>ALL</option><option>BUY</option><option>WATCH</option><option>DON'T CHASE</option></select><button class="btn primary" onclick="load()">↻ Refresh</button><button class="btn" onclick="diagnose()">🔧 Test API</button></div>
+<div id="status" class="notice warn">Connecting…</div>
+<div class="cards"><div class="card"><div class="label">BUY / STRONG BUY</div><div class="metric" id="bn">—</div></div><div class="card"><div class="label">WATCH</div><div class="metric" id="wn">—</div></div><div class="card"><div class="label">DON'T CHASE</div><div class="metric" id="an">—</div></div><div class="card"><div class="label">Best current entry</div><div class="metric" id="best">—</div></div><div class="card"><div class="label">Data updated</div><div class="metric" id="updated">—</div></div></div>
+
+<section class="section"><h2>🎯 Buy radar</h2><div class="table"><table><thead><tr><th>Rank</th><th>Stock</th><th>Price</th><th>Today</th><th>Buy range</th><th>Lock-in</th><th>Strong buy</th><th>Distance</th><th>Next event</th><th>Signal</th><th>Analysis update</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+
+<section class="section"><h2>📈 Intraday chart</h2><div class="card"><select id="sel" onchange="draw()"></select><div id="meta" style="margin:8px 0"></div><div id="chart" class="chart"></div></div></section>
+
+<section class="section grid2"><div><h2>📅 Dynamic events</h2><div id="eventFresh" class="sub">Updating…</div><div id="events" class="events"></div></div><div><h2>🧠 How the price targets work</h2><div class="card" style="line-height:1.6">
+<b>Important:</b> the buy range and lock-in prices are <b>not yet AI-auto-updated</b> in this V10 client. They are stored as strategy inputs so the dashboard never silently changes your targets.<br><br>
+For a genuinely adaptive system, the next layer should recalculate targets from fresh price, earnings, dividend, valuation and news data, then show <b>why</b> a target changed and require your approval before saving it.<br><br>
+<b>Recommended:</b> refresh market data frequently, but update investment targets only after an evidence-based analysis cycle.
+</div></div></section>
+<footer class="sub" style="padding:20px 0 40px">Yahoo SGX quotes are delayed. This is a monitoring/decision-support dashboard, not an execution system. Do not put private API keys in public HTML.</footer>
+</main>
+<script>
+const API_BASE="https://sgstock.lucaschuaweiliat.workers.dev";
+const S=[
+{name:"UOB",t:"U11",y:"U11.SI",min:40.60,max:41.30,lock:41.00,strong:40.60,rank:1},
+{name:"Singtel",t:"Z74",y:"Z74.SI",min:4.15,max:4.30,lock:4.25,strong:4.15,rank:2},
+{name:"CICT",t:"C38U",y:"C38U.SI",min:2.35,max:2.42,lock:2.40,strong:2.30,rank:3},
+{name:"Sembcorp",t:"U96",y:"U96.SI",min:5.30,max:5.55,lock:5.50,strong:5.30,rank:4},
+{name:"ST Engineering",t:"S63",y:"S63.SI",min:10.20,max:10.45,lock:10.30,strong:10.00,rank:5},
+{name:"OCBC",t:"O39",y:"O39.SI",min:30.70,max:31.20,lock:30.90,strong:30.50,rank:6},
+{name:"DBS",t:"D05",y:"D05.SI",min:72,max:74,lock:73,strong:71.50,rank:7},
+{name:"DFI Retail",t:"D01",y:"D01.SI",min:3.50,max:3.70,lock:3.60,strong:3.50,rank:8},
+{name:"Genting Singapore",t:"G13",y:"G13.SI",min:.58,max:.62,lock:.60,strong:.58,rank:9}];
+let events=[],selected="U11";
+const money=x=>x==null?"—":(Math.abs(x)<1?Number(x).toFixed(3):Number(x).toFixed(2));
+function signal(s){if(s.price==null)return["NO DATA","watch"];if(s.price<=s.strong)return["STRONG BUY","buy"];if(s.price<=s.max)return["BUY","buy"];return["DON'T CHASE","avoid"]}
+function nextEvent(s){let a=events.filter(e=>e.ticker===s.t&&e.date>=new Date().toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date));return a[0]}
+function render(){
+ let q=document.getElementById("q").value.toLowerCase(),f=document.getElementById("f").value, b=0,w=0,a=0,best=null;
+ let out="";
+ S.forEach(s=>{let [lab,cl]=signal(s);if(cl==="buy")b++;else if(cl==="watch")w++;else a++;if(s.price!=null&&(!best||Math.abs(s.price-s.lock)<Math.abs(best.price-best.lock)))best=s;
+ if(q&&!(`${s.name} ${s.t}`.toLowerCase().includes(q)))return;if(f!=="ALL"&&f!==lab)return;
+ let d=s.price==null?null:(s.price-s.lock)/s.lock*100,e=nextEvent(s);
+ out+=`<tr><td>${s.rank}</td><td><b>${s.name}</b><div class="sub">${s.t}</div></td><td class="price">$${money(s.price)}</td><td class="${s.changePct>=0?'good':'badc'}">${s.changePct==null?'—':(s.changePct>=0?'+':'')+s.changePct.toFixed(2)+'%'}</td><td>$${money(s.min)}–$${money(s.max)}</td><td>$${money(s.lock)}</td><td>$${money(s.strong)}</td><td class="${d!=null&&d<=0?'good':'badc'}">${d==null?'—':(d>=0?'+':'')+d.toFixed(1)+'%'}</td><td>${e?`${e.date} • ${e.type}`:"—"}</td><td><span class="badge ${cl}">${lab}</span></td><td>${s.analysisNote||"Static strategy input"}</td></tr>`});
+ document.getElementById("rows").innerHTML=out||'<tr><td colspan="11">No matches.</td></tr>';document.getElementById("bn").textContent=b;document.getElementById("wn").textContent=w;document.getElementById("an").textContent=a;document.getElementById("best").textContent=best?best.name:"—";
+}
+async function load(){
+ const st=document.getElementById("status");st.className="notice warn";st.textContent="⏳ Connecting to your Cloudflare Worker…";
+ try{
+   const r=await fetch(API_BASE+"/api/quotes?ts="+Date.now(),{cache:"no-store"});
+   const raw=await r.text();
+   let j; try{j=JSON.parse(raw)}catch(e){throw Error("Worker returned non-JSON data: "+raw.slice(0,160))}
+   if(!r.ok) throw Error(j.error||("HTTP "+r.status));
+   if(!j || !Array.isArray(j.quotes)) throw Error("Worker responded, but 'quotes' is not an array. Keys returned: "+Object.keys(j||{}).join(", "));
+   j.quotes.forEach(x=>{const s=S.find(z=>z.y===x.symbol || z.t===x.symbol?.replace(".SI",""));if(s){Object.assign(s,x);s.chart=Array.isArray(x.points)?x.points:[]}});
+   const ok=j.quotes.filter(x=>x && x.price!=null).length;
+   const failed=j.quotes.filter(x=>!x || x.price==null).map(x=>x?.name||x?.symbol||"unknown");
+   document.getElementById("updated").textContent=j.updated?new Date(j.updated).toLocaleTimeString():"—";
+   st.className=ok===9?"notice ok":(ok>0?"notice warn":"notice bad");
+   st.innerHTML=`<b>${ok}/9 quotes received</b> • ${j.source||"Cloudflare Worker"} • server-side`+(failed.length?`<br><span class="sub">No price returned: ${failed.join(", ")}</span>`:"");
+   await loadEvents();render();draw();
+ }catch(e){st.className="notice bad";st.innerHTML=`<b>Worker connection/data error</b><br>${String(e.message).replaceAll("<","&lt;")}<br><span class="sub">Worker: ${API_BASE} • Try the 🔧 Test API button.</span>`;}
+}
+async function diagnose(){
+ const st=document.getElementById("status");st.className="notice warn";st.textContent="Testing Cloudflare Worker…";
+ try{
+  const h=await fetch(API_BASE+"/api/health?ts="+Date.now(),{cache:"no-store"}); if(!h.ok) throw Error("/api/health HTTP "+h.status);
+  const q=await fetch(API_BASE+"/api/quotes?ts="+Date.now(),{cache:"no-store"}); const raw=await q.text(); let j;try{j=JSON.parse(raw)}catch(e){throw Error("/api/quotes is not JSON")};
+  if(!Array.isArray(j.quotes)) throw Error("/api/quotes has no quotes array. Keys: "+Object.keys(j).join(", "));
+  const ok=j.quotes.filter(x=>x?.price!=null).length; st.className=ok===9?"notice ok":"notice warn"; st.innerHTML=`<b>Cloudflare Worker: OK</b> • /api/quotes: ${ok}/9 prices returned • API connection is working.`;
+ }catch(e){st.className="notice bad";st.textContent="API diagnostic failed: "+e.message;}
+}
+async function loadEvents(){
+ // V10 deliberately keeps event ingestion separate from quote ingestion.
+ // If no event API is configured, the UI explains that event data needs a provider/official feed.
+ const el=document.getElementById("events");const fr=document.getElementById("eventFresh");
+ events=[];fr.textContent="Event API not configured in this demo build.";
+ el.innerHTML='<div class="card">For reliable future earnings/dividend dates, connect a licensed/authoritative corporate-events API through the same Worker. This avoids hard-coded dates and browser CORS problems.</div>';
+}
+function draw(){
+ let s=S.find(x=>x.t===selected)||S[0];selected=document.getElementById("sel").value||selected;s=S.find(x=>x.t===selected)||s;
+ document.getElementById("meta").innerHTML=`<span class="pill">Last $${money(s.price)}</span><span class="pill">Buy $${money(s.min)}–$${money(s.max)}</span><span class="pill">Lock-in $${money(s.lock)}</span><span class="pill">Strong buy $${money(s.strong)}</span>`;
+ let a=s.chart||[];if(a.length<2){document.getElementById("chart").innerHTML='<div style="padding:30px;color:#667085">No intraday data returned.</div>';return}
+ let W=1200,H=470,L=65,R=25,T=50,B=55,lo=Math.min(...a.map(x=>x.c),s.lock),hi=Math.max(...a.map(x=>x.c),s.lock),rg=hi-lo||1,x=i=>L+i*(W-L-R)/(a.length-1),y=v=>T+(hi-v)/rg*(H-T-B),pts=a.map((p,i)=>`${x(i)},${y(p.c)}`).join(" "),ly=y(s.lock);
+ document.getElementById("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%"><rect width="100%" height="100%" fill="#fff"/><text x="${L}" y="27" font-size="17" font-weight="800">${s.name} • 5-minute</text><line x1="${L}" x2="${W-R}" y1="${ly}" y2="${ly}" stroke="#087f5b" stroke-width="2" stroke-dasharray="8 5"/><text x="${W-R}" y="${ly-6}" text-anchor="end" fill="#087f5b">LOCK-IN ${money(s.lock)}</text><polyline points="${pts}" fill="none" stroke="#1266a8" stroke-width="3"/><circle cx="${x(a.length-1)}" cy="${y(a.at(-1).c)}" r="5" fill="#1266a8"/></svg>`;
+}
+document.getElementById("sel").innerHTML=S.map(s=>`<option value="${s.t}">${s.name} (${s.t})</option>`).join("");document.getElementById("sel").value=selected;render();load();setInterval(load,60000);
+</script></body></html>
