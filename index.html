@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SGX Buy Radar V11</title>
+<title>SGX Buy Radar V12</title>
 <style>
 :root{--bg:#0b1220;--card:#111c2e;--card2:#17243a;--text:#f8fafc;--muted:#94a3b8;--primary:#3b82f6;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--border:#26364f}
 [data-theme=bloomberg]{--bg:#050505;--card:#101010;--card2:#181818;--text:#f5f5f5;--muted:#aaa;--primary:#f59e0b;--good:#00d084;--warn:#ffd166;--bad:#ff4d4d;--border:#303030}
@@ -30,16 +30,16 @@ footer{margin:25px 0;color:var(--muted);font-size:12px;line-height:1.5}@media(ma
 <body>
 <div class="wrap">
 <header>
-<div><h1>📈 SGX Buy Radar <span style="color:var(--primary)">V11</span></h1><div class="sub">SGX watchlist • live/delayed quotes • personal stock manager</div></div>
+<div><h1>📈 SGX Buy Radar <span style="color:var(--primary)">V12</span></h1><div class="sub">SGX watchlist • live/delayed quotes • personal stock manager</div></div>
 <div class="actions">
 <button class="btn primary" onclick="openAdd()">＋ Add Stock</button>
-<button class="btn" onclick="openManage()">⚙ Manage</button>
+<button class="btn" onclick="openManage()">⚙ Manage</button><button class="btn" onclick="openGuide()">❓ How it works</button>
 <select class="btn" id="theme" onchange="setTheme(this.value)"><option value="midnight">🌌 Midnight</option><option value="bloomberg">🟠 Bloomberg</option><option value="ocean">🌊 Ocean</option><option value="emerald">🟢 Emerald</option><option value="purple">🟣 Purple</option></select>
 <button class="btn" onclick="refreshAll()">↻ Refresh</button>
 </div>
 </header>
 <div class="status">
-<div class="pill">API: <b id="apiStatus">Checking…</b></div><div class="pill">Quotes: <b id="quoteStatus">—</b></div><div class="pill">Last update: <b id="updated">—</b></div><div class="pill">Watchlist: <b id="count">0</b></div>
+<div class="pill">API: <b id="apiStatus">Checking…</b></div><div class="pill">Quotes: <b id="quoteStatus">—</b></div><div class="pill">Quote data updated: <b id="updated">—</b></div><div class="pill">Analysis: <b id="analysisStatus">Pending</b></div><div class="pill">Watchlist: <b id="count">0</b></div>
 </div>
 <div class="note"><b>V11:</b> Add/remove SGX stocks without editing the HTML. Your watchlist and theme are saved in this browser. Buy/lock-in values remain placeholders until the dynamic analysis/event layer is connected.</div>
 <div class="section"><h2>My Watchlist</h2><span class="sub">Search, add and organize SGX stocks</span></div>
@@ -61,6 +61,20 @@ footer{margin:25px 0;color:var(--muted);font-size:12px;line-height:1.5}@media(ma
 <div style="margin-top:15px"><button class="btn" onclick="resetWatchlist()">Reset to default 9</button></div>
 </div></div>
 
+
+<div id="guideModal" class="modal" onclick="if(event.target===this)closeModal('guideModal')"><div class="modalbox">
+<div class="modalhead"><h2>❓ How the SGX Buy Radar works</h2><button class="btn" onclick="closeModal('guideModal')">✕</button></div>
+<div style="line-height:1.55;color:var(--muted)">
+<p><b style="color:var(--text)">1. Watchlist:</b> Add or remove SGX stocks. The list is saved in this browser.</p>
+<p><b style="color:var(--text)">2. Quotes:</b> The browser calls your Cloudflare Worker, which retrieves market data and returns it to the dashboard.</p>
+<p><b style="color:var(--text)">3. Quote timestamp:</b> “Quote data updated” is when the API returned quote data. It is not a market-open signal and does not mean a recommendation was recalculated.</p>
+<p><b style="color:var(--text)">4. Missing price:</b> “⚠ DATA UNAVAILABLE” means the upstream provider did not return a usable price for that symbol. The site will not invent one.</p>
+<p><b style="color:var(--text)">5. Events:</b> A separate event feed should provide earnings, dividend announcement/ex-dividend/payment dates and an “Events updated” timestamp.</p>
+<p><b style="color:var(--text)">6. Analysis:</b> A separate analysis engine should combine price/trend, valuation, earnings, dividends and news to produce BUY / WAIT / HOLD / AVOID, with Buy Range, Lock-in Price, reasons and an “Analysis updated” timestamp.</p>
+<p><b style="color:var(--text)">7. Refresh:</b> Use ↻ Refresh for an immediate quote request. Automatic quote refresh runs every 2 minutes.</p>
+<hr style="border:0;border-top:1px solid var(--border)">
+<p><b style="color:var(--text)">Current V12 status:</b> Watchlist, themes, Cloudflare quote connection, quote timestamp, automatic refresh and missing-data handling are implemented. Multi-provider fallback, event data and the dynamic BUY/WAIT/HOLD engine require backend endpoints to be added to the Cloudflare Worker.</p>
+</div></div></div>
 <script>
 const API_BASE="https://sgstock.lucaschuaweiliat.workers.dev";
 const KEY="sgx_buy_radar_v11_watchlist", THEME_KEY="sgx_buy_radar_v11_theme";
@@ -84,6 +98,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",
 function info(s){return CATALOG.find(x=>x[2]===s)||[s,s,s]}
 function openAdd(){document.getElementById("addModal").classList.add("show");document.getElementById("stockSearch").focus();renderResults()}
 function openManage(){renderManage();document.getElementById("manageModal").classList.add("show")}
+function openGuide(){document.getElementById("guideModal").classList.add("show")}
 function closeModal(id){document.getElementById(id).classList.remove("show")}
 function quickSearch(s){document.getElementById("stockSearch").value=s;renderResults()}
 function renderResults(){
@@ -101,11 +116,11 @@ save();document.getElementById("apiStatus").textContent="Checking…";document.g
 try{let r=await fetch(API_BASE+"/api/quotes",{cache:"no-store"});if(!r.ok)throw Error("Worker HTTP "+r.status);let j=await r.json();if(!Array.isArray(j.quotes))throw Error(j.error||"No quotes array returned");
 quotes={};j.quotes.forEach(q=>{if(q&&q.symbol)quotes[q.symbol]=q});
 let n=watchlist.filter(s=>quotes[s]&&Number.isFinite(Number(quotes[s].price))).length;
-document.getElementById("apiStatus").textContent="🟢 Connected";document.getElementById("quoteStatus").textContent=`${n}/${watchlist.length} quotes`;document.getElementById("updated").textContent=j.updated?new Date(j.updated).toLocaleString():"—";renderCards()
-}catch(e){document.getElementById("apiStatus").textContent="🔴 Failed";document.getElementById("quoteStatus").textContent="Error";document.getElementById("updated").textContent=e.message;renderCards()}}
+document.getElementById("apiStatus").textContent="🟢 Connected";document.getElementById("quoteStatus").textContent=`${n}/${watchlist.length} quotes`;document.getElementById("updated").textContent=j.updated?new Date(j.updated).toLocaleString():"Not supplied";document.getElementById("analysisStatus").textContent="⚠ Analysis feed not connected";renderCards()
+}catch(e){document.getElementById("apiStatus").textContent="🔴 Failed";document.getElementById("quoteStatus").textContent="Error";document.getElementById("updated").textContent=e.message;document.getElementById("analysisStatus").textContent="Cannot analyse without quote feed";renderCards()}}
 function renderCards(){
 let el=document.getElementById("watchlist");if(!watchlist.length){el.innerHTML='<div class="empty">No stocks yet. Click ＋ Add Stock.</div>';return}
-el.innerHTML=watchlist.map(s=>{let x=info(s),q=quotes[s]||{},p=Number(q.price),c=Number(q.changePercent),ok=Number.isFinite(p);return `<div class="card"><div class="top"><div><div class="name">${esc(x[0])}</div><div class="ticker">${esc(s)} • ${esc(x[1])}</div></div><span class="signal ${ok?'watch':'nodata'}">${ok?'WATCH':'NO DATA'}</span></div><div class="price">${ok?money(p):'—'} ${Number.isFinite(c)?`<span class="${c>0?'good':c<0?'bad':'neutral'}" style="font-size:14px">${pct(c)}</span>`:''}</div><div class="meta"><div><small>Buy range</small><strong>To be analysed</strong></div><div><small>Lock-in</small><strong>To be analysed</strong></div><div><small>Volume</small><strong>${Number.isFinite(Number(q.volume))?Number(q.volume).toLocaleString():'—'}</strong></div><div><small>Day range</small><strong>${Number.isFinite(Number(q.low))?money(Number(q.low)):'—'} – ${Number.isFinite(Number(q.high))?money(Number(q.high)):'—'}</strong></div></div><div class="muted" style="font-size:12px;margin-top:12px">Earnings, dividends and news: dynamic event layer to be connected.</div></div>`}).join("")}
+el.innerHTML=watchlist.map(s=>{let x=info(s),q=quotes[s]||{},p=Number(q.price),c=Number(q.changePercent),ok=Number.isFinite(p);return `<div class="card"><div class="top"><div><div class="name">${esc(x[0])}</div><div class="ticker">${esc(s)} • ${esc(x[1])}</div></div><span class="signal ${ok?'watch':'nodata'}">${ok?'WATCH':'NO DATA'}</span></div><div class="price">${ok?money(p):'—'} ${Number.isFinite(c)?`<span class="${c>0?'good':c<0?'bad':'neutral'}" style="font-size:14px">${pct(c)}</span>`:''}</div><div class="meta"><div><small>Buy range</small><strong>Analysis pending</strong></div><div><small>Lock-in</small><strong>Analysis pending</strong></div><div><small>Volume</small><strong>${Number.isFinite(Number(q.volume))?Number(q.volume).toLocaleString():'—'}</strong></div><div><small>Day range</small><strong>${Number.isFinite(Number(q.low))?money(Number(q.low)):'—'} – ${Number.isFinite(Number(q.high))?money(Number(q.high)):'—'}</strong></div></div><div class="muted" style="font-size:12px;margin-top:12px">Earnings, dividends and news: dynamic event layer to be connected.</div></div>`}).join("")}
 loadTheme();save();renderCards();refreshAll();setInterval(refreshAll,120000);
 </script>
 </body>
